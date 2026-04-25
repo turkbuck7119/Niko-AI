@@ -10,51 +10,52 @@
             border-radius: 50%; border: 5px solid #fff;
             box-shadow: 0 0 30px #ff00ff; cursor: pointer;
         }
-        #status { margin-top: 20px; font-size: 18px; text-align: center; max-width: 80%; }
+        #status { margin-top: 20px; font-size: 18px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="niko-btn" id="nikoBtn"></div>
-    <div id="status">SİSTEM HAZIRLANIYOR...</div>
+    <div id="status">SİSTEM YÜKLENİYOR...</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.browser.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.browser.js"></script>
 
     <script>
-        // BURAYA KENDİ ID'LERİNİ ÇOK DİKKATLİ YAPIŞTIR
         const PUBLIC_KEY = '4a9959e2-3154-45d1-ae41-11a9cdfd51d3'; 
-        const ASSISTANT_ID = '7b882e8c-f4b6-4a32-8788-17c5513e9b71';
+        const ASSISTANT_ID = '71b539bc-fd3d-4e32-8781-17d5c0d64c0a';
 
-        let vapi;
+        let vapiInstance = null;
         const btn = document.getElementById('nikoBtn');
         const status = document.getElementById('status');
 
-        // Kütüphane yüklendi mi kontrol et
-        window.onload = () => {
-            try {
-                vapi = new Vapi(PUBLIC_KEY);
-                status.innerText = "NIKO UYKUDA\n(DOKUN VE KONUŞ)";
-                console.log("Vapi hazır!");
-            } catch (e) {
-                status.innerText = "SİSTEM BAŞLATILAMADI!";
-                console.error(e);
+        // Vapi'nin yüklenmesini bekleyen fonksiyon
+        function initializeVapi() {
+            if (typeof Vapi !== 'undefined') {
+                vapiInstance = new Vapi(PUBLIC_KEY);
+                status.innerText = "NIKO HAZIR!\nDOKUN KONUŞ";
+                console.log("Vapi başarıyla yüklendi.");
+                
+                vapiInstance.on('call-start', () => { status.innerText = "NIKO DİNLİYOR..."; });
+                vapiInstance.on('speech-start', () => { status.innerText = "NIKO KONUŞUYOR..."; });
+                vapiInstance.on('call-end', () => { status.innerText = "NIKO UYKUDA"; });
+            } else {
+                status.innerText = "VAPI YÜKLENEMEDİ!\nSAYFAYI YENİLE.";
             }
+        }
+
+        // Sayfa tamamen yüklendiğinde 1 saniye bekle ve başlat
+        window.onload = () => {
+            setTimeout(initializeVapi, 1000);
         };
 
         btn.onclick = () => {
-            if (!vapi) {
-                status.innerText = "HATA: VAPI YÜKLENMEDİ!";
-                return;
+            if (vapiInstance) {
+                status.innerText = "BAĞLANILIYOR...";
+                vapiInstance.start(ASSISTANT_ID);
+            } else {
+                alert("Sistem henüz hazır değil, lütfen bekle.");
             }
-            status.innerText = "BAĞLANTI KURULUYOR...";
-            vapi.start(ASSISTANT_ID);
         };
-
-        vapi.on('call-start', () => { status.innerText = "NIKO DİNLİYOR...\nLÜTFEN KONUŞ"; });
-        vapi.on('error', (e) => { 
-            status.innerText = "BAĞLANTI HATASI!\nID'LERİ KONTROL ET";
-            console.error(e);
-        });
     </script>
 </body>
 </html>
