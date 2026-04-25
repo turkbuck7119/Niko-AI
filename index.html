@@ -6,54 +6,66 @@
     <style>
         body { background: #000; color: #ff00ff; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: 'Courier New', monospace; margin: 0; }
         .niko-btn {
-            width: 130px; height: 130px; background: #ff00ff;
+            width: 140px; height: 140px; background: #ff00ff;
             border-radius: 50%; border: 5px solid #fff;
             box-shadow: 0 0 30px #ff00ff; cursor: pointer;
+            transition: 0.3s;
         }
-        #status { margin-top: 20px; font-size: 18px; text-align: center; }
+        #status { margin-top: 20px; font-size: 16px; text-align: center; color: #ff00ff; }
+        .error-log { font-size: 10px; color: #555; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="niko-btn" id="nikoBtn"></div>
-    <div id="status">SİSTEM YÜKLENİYOR...</div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.browser.js"></script>
+    <div id="status">SİSTEM BAŞLATILIYOR...</div>
+    <div id="debug" class="error-log"></div>
 
     <script>
+        // ID'lerini buraya tekrar dikkatlice yaz Eymen
         const PUBLIC_KEY = '4a9959e2-3154-45d1-ae41-11a9cdfd51d3'; 
         const ASSISTANT_ID = '71b539bc-fd3d-4e32-8781-17d5c0d64c0a';
 
-        let vapiInstance = null;
-        const btn = document.getElementById('nikoBtn');
         const status = document.getElementById('status');
+        const debug = document.getElementById('debug');
+        let vapiInstance = null;
 
-        // Vapi'nin yüklenmesini bekleyen fonksiyon
-        function initializeVapi() {
-            if (typeof Vapi !== 'undefined') {
-                vapiInstance = new Vapi(PUBLIC_KEY);
-                status.innerText = "NIKO HAZIR!\nDOKUN KONUŞ";
-                console.log("Vapi başarıyla yüklendi.");
-                
-                vapiInstance.on('call-start', () => { status.innerText = "NIKO DİNLİYOR..."; });
-                vapiInstance.on('speech-start', () => { status.innerText = "NIKO KONUŞUYOR..."; });
-                vapiInstance.on('call-end', () => { status.innerText = "NIKO UYKUDA"; });
-            } else {
-                status.innerText = "VAPI YÜKLENEMEDİ!\nSAYFAYI YENİLE.";
-            }
+        // Kütüphaneyi kodun içinde dinamik olarak yükleyelim
+        function loadVapi() {
+            const script = document.createElement('script');
+            script.src = "https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.browser.js";
+            script.async = true;
+
+            script.onload = () => {
+                try {
+                    vapiInstance = new Vapi(PUBLIC_KEY);
+                    status.innerText = "NIKO HAZIR!\nDOKUN VE KONUŞ";
+                    console.log("Vapi yüklendi!");
+                } catch (e) {
+                    status.innerText = "VAPI KURULUM HATASI!";
+                    debug.innerText = e.message;
+                }
+            };
+
+            script.onerror = () => {
+                status.innerText = "KÜTÜPHANE İNDİRİLEMEDİ!\nİnternetini kontrol et.";
+                debug.innerText = "CDN Erişim Hatası";
+            };
+
+            document.head.appendChild(script);
         }
 
-        // Sayfa tamamen yüklendiğinde 1 saniye bekle ve başlat
-        window.onload = () => {
-            setTimeout(initializeVapi, 1000);
-        };
+        window.onload = loadVapi;
 
-        btn.onclick = () => {
+        document.getElementById('nikoBtn').onclick = () => {
             if (vapiInstance) {
-                status.innerText = "BAĞLANILIYOR...";
-                vapiInstance.start(ASSISTANT_ID);
+                status.innerText = "BAĞLANTI KURULUYOR...";
+                vapiInstance.start(ASSISTANT_ID).catch(err => {
+                    status.innerText = "BAĞLANTI BAŞARISIZ!";
+                    debug.innerText = JSON.stringify(err);
+                });
             } else {
-                alert("Sistem henüz hazır değil, lütfen bekle.");
+                status.innerText = "BEKLE, SİSTEM YÜKLENİYOR...";
             }
         };
     </script>
