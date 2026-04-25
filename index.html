@@ -2,110 +2,46 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Niko AI - N Studios</title>
-    <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
     <style>
-        body {
-            background: #000;
-            color: #ff00ff;
-            font-family: 'Courier New', monospace;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        #niko-status {
-            font-size: 20px;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px #ff00ff;
-        }
-        .circle-container {
-            position: relative;
-            cursor: pointer;
-        }
+        body { background: #000; color: #ff00ff; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: 'Courier New', monospace; margin: 0; }
         .niko-btn {
-            width: 150px;
-            height: 150px;
-            background: #ff00ff;
-            border-radius: 50%;
-            border: 4px solid #fff;
-            box-shadow: 0 0 30px #ff00ff;
+            width: 130px; height: 130px; background: #ff00ff;
+            border-radius: 50%; border: 5px solid #fff;
+            box-shadow: 0 0 30px #ff00ff; cursor: pointer;
             transition: 0.3s;
-            animation: pulse 2s infinite;
         }
-        .niko-btn:hover { transform: scale(1.05); box-shadow: 0 0 50px #ff00ff; }
-        .niko-btn:active { transform: scale(0.95); }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 20px #ff00ff; }
-            50% { box-shadow: 0 0 40px #ff00ff; transform: scale(1.02); }
-            100% { box-shadow: 0 0 20px #ff00ff; }
-        }
-        .info-text { margin-top: 30px; color: #444; font-size: 12px; }
+        .niko-btn:active { transform: scale(0.9); }
+        #status { margin-top: 20px; font-size: 18px; text-shadow: 0 0 10px #ff00ff; }
     </style>
 </head>
 <body>
 
-    <div id="niko-status">NIKO: UYKU MODUNDA</div>
-    
-    <div class="circle-container" id="startButton">
-        <div class="niko-btn"></div>
-    </div>
+    <div class="niko-btn" id="nikoBtn"></div>
+    <div id="status">NIKO'YU UYANDIRMAK İÇİN DOKUN</div>
 
-    <div class="info-text">N Studios - Niko AI</div>
+    <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.browser.js"></script>
 
     <script>
-        // --- AYARLAR ---
-        const APP_ID = '559f382253324aa1918f2bbdb3e7fb1e'; // <--- Kopyaladığın ID'yi buraya yapıştır
-        const CHANNEL = 'niko_room';
-        
-        let client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-        let localAudioTrack;
-        let isConnected = false;
+        // BURAYA KENDİ ID'LERİNİ YAZ
+        const vapi = new Vapi(4a9959e2-3154-45d1-ae41-11a9cdfd51d3);
+        const ASSISTANT_ID = '7b882e8c-f4b6-4a32-8788-17c5513e9b71';
 
-        const startBtn = document.getElementById('startButton');
-        const statusText = document.getElementById('niko-status');
+        const btn = document.getElementById('nikoBtn');
+        const status = document.getElementById('status');
 
-        async function connectNiko() {
-            if(isConnected) return;
-            
-            try {
-                statusText.innerText = "BAĞLANTI DENENİYOR...";
-                
-                // Agora kanalına bağlanma
-                await client.join(APP_ID, CHANNEL, null, null);
-                
-                // Mikrofona erişim izni alma
-                localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-                
-                // Sesi kanala gönderme
-                await client.publish([localAudioTrack]);
-                
-                statusText.innerText = "NIKO AKTİF - KONUŞABİLİRSİN";
-                statusText.style.color = "#00ff00";
-                isConnected = true;
-                console.log("Bağlantı başarılı!");
+        btn.onclick = () => {
+            vapi.start(ASSISTANT_ID);
+            status.innerText = "BAĞLANILIYOR...";
+        };
 
-            } catch (error) {
-                console.error("Hata:", error);
-                statusText.innerText = "HATA: Mikrofonu Kontrol Et!";
-                statusText.style.color = "red";
-            }
-        }
-
-        startBtn.addEventListener('click', connectNiko);
-
-        // Birisi konuştuğunda (opsiyonel görsel tepki için)
-        client.on("user-published", async (user, mediaType) => {
-            if (mediaType === "audio") {
-                await client.subscribe(user, mediaType);
-                user.audioTrack.play();
-                statusText.innerText = "NIKO CEVAP VERİYOR...";
-            }
+        vapi.on('call-start', () => { status.innerText = "NIKO DİNLİYOR..."; status.style.color = "#00ff00"; });
+        vapi.on('call-end', () => { status.innerText = "NIKO UYKUDA"; status.style.color = "#ff00ff"; });
+        vapi.on('speech-start', () => { status.innerText = "NIKO KONUŞUYOR..."; });
+        vapi.on('speech-end', () => { status.innerText = "NIKO DİNLİYOR..."; });
+        vapi.on('error', (e) => { 
+            console.error(e);
+            status.innerText = "HATA: TEKRAR DENE"; 
         });
     </script>
 </body>
