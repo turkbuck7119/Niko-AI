@@ -9,39 +9,51 @@
             width: 130px; height: 130px; background: #ff00ff;
             border-radius: 50%; border: 5px solid #fff;
             box-shadow: 0 0 30px #ff00ff; cursor: pointer;
-            transition: 0.3s;
         }
-        .niko-btn:active { transform: scale(0.9); }
-        #status { margin-top: 20px; font-size: 18px; text-shadow: 0 0 10px #ff00ff; }
+        #status { margin-top: 20px; font-size: 18px; text-align: center; max-width: 80%; }
     </style>
 </head>
 <body>
 
     <div class="niko-btn" id="nikoBtn"></div>
-    <div id="status">NIKO'YU UYANDIRMAK İÇİN DOKUN</div>
+    <div id="status">SİSTEM HAZIRLANIYOR...</div>
 
     <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.browser.js"></script>
 
     <script>
-        // BURAYA KENDİ ID'LERİNİ YAZ
-        const vapi = new Vapi(4a9959e2-3154-45d1-ae41-11a9cdfd51d3);
+        // BURAYA KENDİ ID'LERİNİ ÇOK DİKKATLİ YAPIŞTIR
+        const PUBLIC_KEY = '4a9959e2-3154-45d1-ae41-11a9cdfd51d3'; 
         const ASSISTANT_ID = '7b882e8c-f4b6-4a32-8788-17c5513e9b71';
 
+        let vapi;
         const btn = document.getElementById('nikoBtn');
         const status = document.getElementById('status');
 
-        btn.onclick = () => {
-            vapi.start(ASSISTANT_ID);
-            status.innerText = "BAĞLANILIYOR...";
+        // Kütüphane yüklendi mi kontrol et
+        window.onload = () => {
+            try {
+                vapi = new Vapi(PUBLIC_KEY);
+                status.innerText = "NIKO UYKUDA\n(DOKUN VE KONUŞ)";
+                console.log("Vapi hazır!");
+            } catch (e) {
+                status.innerText = "SİSTEM BAŞLATILAMADI!";
+                console.error(e);
+            }
         };
 
-        vapi.on('call-start', () => { status.innerText = "NIKO DİNLİYOR..."; status.style.color = "#00ff00"; });
-        vapi.on('call-end', () => { status.innerText = "NIKO UYKUDA"; status.style.color = "#ff00ff"; });
-        vapi.on('speech-start', () => { status.innerText = "NIKO KONUŞUYOR..."; });
-        vapi.on('speech-end', () => { status.innerText = "NIKO DİNLİYOR..."; });
+        btn.onclick = () => {
+            if (!vapi) {
+                status.innerText = "HATA: VAPI YÜKLENMEDİ!";
+                return;
+            }
+            status.innerText = "BAĞLANTI KURULUYOR...";
+            vapi.start(ASSISTANT_ID);
+        };
+
+        vapi.on('call-start', () => { status.innerText = "NIKO DİNLİYOR...\nLÜTFEN KONUŞ"; });
         vapi.on('error', (e) => { 
+            status.innerText = "BAĞLANTI HATASI!\nID'LERİ KONTROL ET";
             console.error(e);
-            status.innerText = "HATA: TEKRAR DENE"; 
         });
     </script>
 </body>
