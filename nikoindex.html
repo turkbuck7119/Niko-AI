@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Niko AI</title>
+    <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web"></script>
+    <style>
+        body { background: #000; color: #ff00ff; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: monospace; }
+        .niko-circle {
+            width: 150px; height: 150px; background: #ff00ff;
+            border-radius: 50%; box-shadow: 0 0 30px #ff00ff;
+            cursor: pointer; border: none; transition: 0.3s;
+        }
+        #status { margin-top: 20px; font-size: 18px; text-shadow: 0 0 5px #ff00ff; }
+        #error-log { margin-top: 10px; color: red; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <button class="niko-circle" id="nikoBtn"></button>
+    <div id="status">SİSTEM HAZIR (TIKLA)</div>
+    <div id="error-log"></div>
+
+    <script>
+        // BURADAKİ İKİ KODU VAPİ PANELİNDEN TEKRAR KONTROL ET
+        const PUBLIC_KEY = '4a9959e2-3154-45d1-ae41-11a9cdfd51d3';
+        const ASSISTANT_ID = '71b539bc-fd3d-4e32-8781-17d5c0d64c0a'; // Videodaki Niko-AI ID'si
+
+        const vapi = new Vapi(PUBLIC_KEY);
+        const btn = document.getElementById('nikoBtn');
+        const status = document.getElementById('status');
+        const errorLog = document.getElementById('error-log');
+
+        btn.onclick = () => {
+            status.innerText = "PROTOKOL BAŞLATILIYOR...";
+            vapi.start(ASSISTANT_ID).catch(err => {
+                errorLog.innerText = "HATA: " + err.message;
+            });
+        };
+
+        vapi.on('call-start', () => { status.innerText = "NIKO AKTİF"; });
+        vapi.on('call-end', () => { status.innerText = "NIKO UYKUDA"; });
+        vapi.on('error', (e) => { errorLog.innerText = "VAPI HATASI: " + e.message; });
+    </script>
+</body>
+</html>
