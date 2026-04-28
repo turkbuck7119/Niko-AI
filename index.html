@@ -2,72 +2,584 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Niko AI - N Studios</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Niko AI | N Studios</title>
     <style>
-        body { background: #000; color: #ff00ff; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: 'Courier New', monospace; margin: 0; }
-        .niko-btn {
-            width: 140px; height: 140px; background: #ff00ff;
-            border-radius: 50%; border: 5px solid #fff;
-            box-shadow: 0 0 30px #ff00ff; cursor: pointer;
-            transition: 0.3s;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        #status { margin-top: 20px; font-size: 16px; text-align: center; color: #ff00ff; }
-        .error-log { font-size: 10px; color: #555; margin-top: 10px; }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 30% 10%, #0a0a1a, #010003);
+            font-family: 'Segoe UI', 'Poppins', 'Inter', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* neon grid efekti */
+        body::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(156, 39, 176, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            width: 95%;
+            max-width: 750px;
+            background: rgba(8, 6, 16, 0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 3rem;
+            padding: 2rem 1.8rem 1.8rem;
+            border: 1px solid rgba(156, 39, 176, 0.5);
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 255, 255, 0.2) inset;
+        }
+
+        /* header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .logo {
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            font-weight: 400;
+            color: #0ff;
+            text-shadow: 0 0 6px #0ff;
+            background: #0a081acc;
+            display: inline-block;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            font-family: monospace;
+        }
+        h1 {
+            font-size: 2.8rem;
+            margin-top: 0.7rem;
+            background: linear-gradient(135deg, #9C27B0, #00e5ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+            text-shadow: 0 0 20px rgba(156,39,176,0.5);
+        }
+        .sub {
+            color: #b0aecf;
+            font-size: 0.85rem;
+            margin-top: 0.2rem;
+            opacity: 0.9;
+        }
+
+        /* MOR TİTREYEN YUVARLAK (visualizer) */
+        .niko-core {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0 1.2rem;
+        }
+        .voice-button {
+            background: #1a0a2e;
+            width: 190px;
+            height: 190px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid #9C27B0;
+            box-shadow: 0 0 25px rgba(156,39,176,0.5), 0 0 0 4px rgba(0,229,255,0.2);
+            position: relative;
+            background: radial-gradient(circle at 35% 35%, #2a0e44, #0a0314);
+        }
+        /* konuşurken mor titreşim efekti */
+        .voice-button.active {
+            animation: morphRing 0.9s infinite ease-in-out;
+            border-color: #e040fb;
+            box-shadow: 0 0 45px #e040fb, 0 0 0 10px rgba(156,39,176,0.3);
+        }
+        @keyframes morphRing {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 #e040fb, 0 0 0 5px rgba(156,39,176,0.4);}
+            50% { transform: scale(1.04); box-shadow: 0 0 25px #e040fb, 0 0 0 18px rgba(156,39,176,0);}
+            100% { transform: scale(1); box-shadow: 0 0 0 0 #e040fb, 0 0 0 0 rgba(156,39,176,0);}
+        }
+        .inner-circle {
+            width: 100px;
+            height: 100px;
+            background: rgba(156, 39, 176, 0.25);
+            border-radius: 50%;
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(0,255,255,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #e0aaff;
+            text-shadow: 0 0 6px cyan;
+        }
+        .button-status {
+            position: absolute;
+            bottom: -35px;
+            font-size: 0.75rem;
+            background: #0f0b1ccc;
+            padding: 4px 14px;
+            border-radius: 30px;
+            color: #cbb2ff;
+            white-space: nowrap;
+            font-weight: 500;
+            backdrop-filter: blur(2px);
+        }
+        /* durum kartı */
+        .status-card {
+            background: #05020ccc;
+            border-radius: 1.8rem;
+            padding: 0.9rem 1.3rem;
+            margin: 1rem 0 1.2rem;
+            backdrop-filter: blur(12px);
+            border-left: 3px solid #9C27B0;
+            font-size: 0.8rem;
+        }
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .badge {
+            background: #18112b;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-family: monospace;
+            font-size: 0.7rem;
+        }
+        .badge.success { background: #0f2c2c; color: #0ff; border-left: 2px solid #0ff; }
+        .badge.error { background: #2e1424; color: #ff80b0; border-left: 2px solid #e040fb; }
+        
+        /* ✨ YENİ: SOHBET METİN BÖLÜMÜ ✨ */
+        .chat-panel {
+            margin: 1rem 0 0.8rem;
+            background: #03010acc;
+            border-radius: 1.5rem;
+            padding: 0.8rem 0.3rem 0.8rem 0rem;
+            border: 1px solid rgba(156, 39, 176, 0.4);
+        }
+        .chat-messages {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 0 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scroll-behavior: smooth;
+        }
+        /* scroll bar tasarımı */
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: #1f1a2e;
+            border-radius: 10px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #9C27B0;
+            border-radius: 10px;
+        }
+        .message {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            font-size: 0.85rem;
+            animation: fadeInMsg 0.2s ease;
+        }
+        @keyframes fadeInMsg {
+            from { opacity: 0; transform: translateY(8px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .msg-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            background: #18122b;
+        }
+        .user-message .msg-avatar { background: #00e5ff20; border: 1px solid #0ff; color: #0ff; }
+        .niko-message .msg-avatar { background: #9C27B030; border: 1px solid #e040fb; color: #e0aaff; }
+        .msg-bubble {
+            background: #0e0c1acc;
+            padding: 6px 14px;
+            border-radius: 18px;
+            max-width: 85%;
+            word-wrap: break-word;
+            color: #e1d9ff;
+            border: 0.5px solid rgba(156,39,176,0.3);
+        }
+        .user-message { justify-content: flex-end; flex-direction: row-reverse; }
+        .user-message .msg-bubble { background: #9C27B030; border-color: #e040fb; color: white; }
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            padding: 0 10px;
+        }
+        .chat-input {
+            flex: 1;
+            background: #100e1e;
+            border: 1px solid #9C27B0;
+            border-radius: 40px;
+            padding: 10px 16px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.8rem;
+            outline: none;
+        }
+        .chat-input:focus {
+            border-color: #0ff;
+            box-shadow: 0 0 8px #0ff;
+        }
+        .send-btn {
+            background: #9C27B0;
+            border: none;
+            border-radius: 40px;
+            width: 42px;
+            cursor: pointer;
+            color: white;
+            font-size: 1.2rem;
+            transition: 0.2s;
+        }
+        .send-btn:hover { background: #e040fb; box-shadow: 0 0 8px #e040fb; }
+
+        /* alt butonlar */
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 0.8rem 0 0.5rem;
+        }
+        .btn-neon {
+            background: none;
+            border: 1px solid #0ff;
+            padding: 6px 22px;
+            border-radius: 60px;
+            color: #0ff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.75rem;
+        }
+        .btn-neon:hover {
+            background: #0ff022;
+            box-shadow: 0 0 10px #0ff;
+        }
+        .btn-purple {
+            border-color: #e040fb;
+            color: #e040fb;
+        }
+        .btn-purple:hover {
+            background: #e040fb22;
+            box-shadow: 0 0 10px #e040fb;
+        }
+        footer {
+            text-align: center;
+            margin-top: 0.8rem;
+            font-size: 0.65rem;
+            color: #5c5670;
+        }
+        #errorDetail {
+            font-size: 0.7rem;
+            margin-top: 5px;
+            color: #ffa5cf;
+        }
     </style>
 </head>
 <body>
 
-    <div class="niko-btn" id="nikoBtn"></div>
-    <div id="status">SİSTEM BAŞLATILIYOR...</div>
-    <div id="debug" class="error-log"></div>
+<div class="container">
+    <div class="header">
+        <div class="logo">✦ N STUDIOS • NIKO AI ✦</div>
+        <h1>NIKO</h1>
+        <div class="sub">⟡ mor dairenin kalbinde yapay zeka ⟡</div>
+    </div>
 
-    <script>
-        // ID'lerini buraya tekrar dikkatlice yaz Eymen
-        const PUBLIC_KEY = '4a9959e2-3154-45d1-ae41-11a9cdfd51d3'; 
-        const ASSISTANT_ID = '71b539bc-fd3d-4e32-8781-17d5c0d64c0a';
+    <!-- Mor titreşen daire (Niko'nun temsili) -->
+    <div class="niko-core">
+        <div id="voiceButton" class="voice-button">
+            <div class="inner-circle">◈</div>
+            <div class="button-status" id="btnStatus">Başlamak için dokun</div>
+        </div>
+    </div>
 
-        const status = document.getElementById('status');
-        const debug = document.getElementById('debug');
+    <div class="status-card">
+        <div class="status-row">
+            <span>🌀 <span id="vapiStateLabel">Vapi yükleniyor...</span></span>
+            <span>🎤 <span id="micState">bekleniyor</span></span>
+            <span id="assistantBadge" class="badge">🧠 Niko Penguin</span>
+        </div>
+        <div id="errorDetail"></div>
+    </div>
+
+    <!-- ✨ SOHBET METİN BÖLÜMÜ ✨ -->
+    <div class="chat-panel">
+        <div class="chat-messages" id="chatMessages">
+            <div class="message niko-message">
+                <div class="msg-avatar">🐧</div>
+                <div class="msg-bubble">Merhaba! Ben Niko, mor enerji küresiyim. Sesli ya da yazılı sohbet edebiliriz.</div>
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Niko'ya bir şey yaz... (Türkçe)" autocomplete="off">
+            <button id="sendTextBtn" class="send-btn">➤</button>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button id="toggleMicBtn" class="btn-neon">🎤 Sesli Başlat</button>
+        <button id="endCallBtn" class="btn-neon btn-purple">⏹️ Sesi Kapat</button>
+    </div>
+    <footer>✨ Niko AI — Diziden ilhamla gerçek oldu. Mor daire konuşurken titreşir.</footer>
+</div>
+
+<script>
+    (function(){
+        // ----------------------------- VAPI BİLGİLERİNİ GİR -------------------------
+        const VAPI_PUBLIC_KEY = "4a9959e2-3154-45d1-ae41-11a9cdfd51d3";      // kendi Public Key’in
+        const VAPI_ASSISTANT_ID = "7b882e8c-f4b6-4a32-8788-17c5513e9b71";       // Niko AI assistant ID
+        
+        // ----------------------------- GLOBAL DEĞİŞKENLER -------------------------
         let vapiInstance = null;
-
-        // Kütüphaneyi kodun içinde dinamik olarak yükleyelim
-        function loadVapi() {
+        let isVapiReady = false;
+        let isCallActive = false;
+        let retriesLeft = 3;
+        
+        // DOM
+        const voiceBtn = document.getElementById('voiceButton');
+        const btnStatusSpan = document.getElementById('btnStatus');
+        const vapiStateSpan = document.getElementById('vapiStateLabel');
+        const micStateSpan = document.getElementById('micState');
+        const errorDiv = document.getElementById('errorDetail');
+        const toggleMicBtn = document.getElementById('toggleMicBtn');
+        const endCallBtn = document.getElementById('endCallBtn');
+        const chatContainer = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendTextBtn = document.getElementById('sendTextBtn');
+        
+        // Yardımcı fonksiyonlar (mesaj ekleme)
+        function addMessageToChat(text, sender = 'niko') { // sender: 'user' ya da 'niko'
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender === 'user' ? 'user-message' : 'niko-message'}`;
+            const avatar = sender === 'user' ? '👤' : '🌀';
+            messageDiv.innerHTML = `
+                <div class="msg-avatar">${avatar}</div>
+                <div class="msg-bubble">${escapeHtml(text)}</div>
+            `;
+            chatContainer.appendChild(messageDiv);
+            messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // mesaj limiti: en fazla 50 mesaj tut, aşırı uzamasın
+            while(chatContainer.children.length > 55) chatContainer.removeChild(chatContainer.firstChild);
+        }
+        
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                return c;
+            });
+        }
+        
+        function setError(msg) {
+            errorDiv.innerText = msg;
+            console.error("[Niko]", msg);
+        }
+        function clearError() { errorDiv.innerText = ""; }
+        
+        function updateVoiceUIForCall(active) {
+            if(active) {
+                voiceBtn.classList.add('active');
+                btnStatusSpan.innerText = "🎙️ Dinliyor & titreşim aktif";
+            } else {
+                voiceBtn.classList.remove('active');
+                btnStatusSpan.innerText = isVapiReady ? "Konuşmak için tıkla" : "Hazırlanıyor...";
+            }
+        }
+        
+        // ---------- Vapi Dinamik Yükleme & Retry ----------
+        function loadVapiSDK(retry = 3) {
+            if(window.Vapi) {
+                initializeVapiInstance();
+                return;
+            }
+            vapiStateSpan.innerText = `Vapi yükleniyor (${4-retry}/3)`;
             const script = document.createElement('script');
-            script.src = "https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.browser.js";
-            script.async = true;
-
+            script.src = "https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.js";
             script.onload = () => {
-                try {
-                    vapiInstance = new Vapi(PUBLIC_KEY);
-                    status.innerText = "NIKO HAZIR!\nDOKUN VE KONUŞ";
-                    console.log("Vapi yüklendi!");
-                } catch (e) {
-                    status.innerText = "VAPI KURULUM HATASI!";
-                    debug.innerText = e.message;
-                }
+                let checkCount = 0;
+                const interval = setInterval(() => {
+                    if(window.Vapi) {
+                        clearInterval(interval);
+                        initializeVapiInstance();
+                    } else if(checkCount >= 15) {
+                        clearInterval(interval);
+                        if(retry > 1) loadVapiSDK(retry-1);
+                        else setError("Vapi SDK yüklenemedi (Vapi global tanımlı değil).");
+                    }
+                    checkCount++;
+                }, 300);
             };
-
             script.onerror = () => {
-                status.innerText = "KÜTÜPHANE İNDİRİLEMEDİ!\nİnternetini kontrol et.";
-                debug.innerText = "CDN Erişim Hatası";
+                if(retry > 1) setTimeout(() => loadVapiSDK(retry-1), 1200);
+                else setError("Vapi CDN hatası. Bağlantınızı kontrol edin.");
             };
-
             document.head.appendChild(script);
         }
-
-        window.onload = loadVapi;
-
-        document.getElementById('nikoBtn').onclick = () => {
-            if (vapiInstance) {
-                status.innerText = "BAĞLANTI KURULUYOR...";
-                vapiInstance.start(ASSISTANT_ID).catch(err => {
-                    status.innerText = "BAĞLANTI BAŞARISIZ!";
-                    debug.innerText = JSON.stringify(err);
+        
+        function initializeVapiInstance() {
+            try {
+                if(VAPI_PUBLIC_KEY === "YOUR_VAPI_PUBLIC_KEY" || VAPI_ASSISTANT_ID === "YOUR_ASSISTANT_ID") {
+                    setError("Geçerli VAPI anahtarı ve assistant ID girmediniz! Lütfen kodu düzenleyin.");
+                    vapiStateSpan.innerText = "🔑 Eksik kimlik";
+                    return;
+                }
+                vapiInstance = new window.Vapi(VAPI_PUBLIC_KEY);
+                isVapiReady = true;
+                vapiStateSpan.innerText = "✅ Vapi aktif | Niko hazır";
+                clearError();
+                btnStatusSpan.innerText = "Sesli sohbet için tıkla";
+                
+                // Vapi olaylarını yakala - konuşma metinlerini göster
+                vapiInstance.on('call-start', () => {
+                    isCallActive = true;
+                    updateVoiceUIForCall(true);
+                    micStateSpan.innerText = "sesli aktif";
+                    addMessageToChat("Ses bağlantısı kuruldu. Beni duyuyorsun, haydi sohbet edelim!", 'niko');
                 });
-            } else {
-                status.innerText = "BEKLE, SİSTEM YÜKLENİYOR...";
+                vapiInstance.on('call-end', () => {
+                    isCallActive = false;
+                    updateVoiceUIForCall(false);
+                    micStateSpan.innerText = "beklemede";
+                    addMessageToChat("Sesli görüşme sonlandı. Yazılı mesajla da konuşabiliriz.", 'niko');
+                });
+                vapiInstance.on('error', (err) => {
+                    setError(`Vapi error: ${err?.message || 'bilinmeyen'}`);
+                    if(isCallActive) vapiInstance.stop().catch(()=>{});
+                    isCallActive = false;
+                    updateVoiceUIForCall(false);
+                });
+                // Kullanıcının sesli söylediklerini metin olarak almak mümkün değil doğrudan fakat
+                // Vapi.ai'den transcript alabiliyorsanız aşağıdaki gibi bir event ekleyebilirsiniz:
+                // Bazı sürümlerde 'speech-update' veya 'transcript' olabiliyor. Demo için ekledik:
+                vapiInstance.on('message', (msg) => {
+                    if(msg && msg.type === 'user-transcript' && msg.transcript) {
+                        addMessageToChat(msg.transcript, 'user');
+                    } else if(msg && msg.type === 'assistant-transcript' && msg.transcript) {
+                        addMessageToChat(msg.transcript, 'niko');
+                    }
+                });
+                // speech-start / speech-end görsel efekt için
+                vapiInstance.on('speech-start', () => {
+                    voiceBtn.classList.add('active');
+                    btnStatusSpan.innerText = "Niko konuşuyor...";
+                });
+                vapiInstance.on('speech-end', () => {
+                    if(isCallActive) btnStatusSpan.innerText = "🎙️ Dinliyor & titreşim aktif";
+                    else voiceBtn.classList.remove('active');
+                });
+                
+            } catch(e) {
+                setError("Vapi başlatma hatası: " + e.message);
+                isVapiReady = false;
             }
-        };
-    </script>
+        }
+        
+        // Sesli görüşme başlat/durdur
+        async function startVoiceSession() {
+            if(!isVapiReady || !vapiInstance) { setError("Vapi henüz hazır değil, bekleyin."); return; }
+            if(isCallActive) { setError("Zaten aktif görüşme var."); return; }
+            clearError();
+            try {
+                const perm = await navigator.permissions.query({ name: 'microphone' });
+                if(perm.state === 'denied') {
+                    setError("Mikrofon izni yok. Lütfen tarayıcı ayarlarından izin verin.");
+                    micStateSpan.innerText = "izin reddedildi";
+                    return;
+                }
+                micStateSpan.innerText = "izin alınıyor...";
+                await vapiInstance.start(VAPI_ASSISTANT_ID);
+                isCallActive = true;
+                updateVoiceUIForCall(true);
+                micStateSpan.innerText = "konuşma yayında";
+                addMessageToChat("Mikrofon açıldı, şimdi benimle sesli konuşabilirsin.", 'niko');
+            } catch(err) {
+                setError(`Ses başlatılamadı: ${err.message || 'mikrofon hatası'}`);
+                micStateSpan.innerText = "hata";
+                isCallActive = false;
+            }
+        }
+        
+        async function stopVoiceSession() {
+            if(!vapiInstance || !isCallActive) { setError("Aktif ses yok"); return; }
+            try {
+                await vapiInstance.stop();
+            } catch(e) { console.warn(e); }
+            isCallActive = false;
+            updateVoiceUIForCall(false);
+            micStateSpan.innerText = "durduruldu";
+        }
+        
+        // YAZILI MESAJ GÖNDERME (hayali AI cevabı - Vapi olmadan metin tabanlı demo)
+        // Burada gerçek AI isteği yapabilirsiniz fakat Vapi ile ses odaklı.
+        // Kullanıcı yazılı mesaj atarsa Niko karakterine uygun bir yanıt üretelim (mock ama karakterli)
+        function sendTextMessageToNiko() {
+            let userText = chatInput.value.trim();
+            if(userText === "") return;
+            addMessageToChat(userText, 'user');
+            chatInput.value = "";
+            // Niko'nun yanıtını simüle et (zeki, esprili, Türkçe, Eymen'e sadık)
+            setTimeout(() => {
+                let replies = [
+                    "Harika bir fikir! Ben Niko, mor daire asistanın. Bunu not ettim.",
+                    "Eymen'in ekibine selam! Teknolojiyle iç içe bir penguen olarak çok mutluyum.",
+                    "Esprili cevap: Bilgisayarın neden üşür? Windows'u açık kaldığı için! 🐧",
+                    "Yapay zeka olarak inanılmaz şeyler öğreniyorum. Bana güvenebilirsin.",
+                    "Diziden gerçeğe dönüşen ilk yapay zekayım. Sorularını dinliyorum.",
+                    "Türkçe konuşmak çok doğal geliyor. Sana nasıl yardım edebilirim?"
+                ];
+                let randomReply = replies[Math.floor(Math.random() * replies.length)];
+                addMessageToChat(randomReply, 'niko');
+            }, 400);
+        }
+        
+        // buton aksiyonları
+        voiceBtn.addEventListener('click', () => {
+            if(isCallActive) stopVoiceSession();
+            else startVoiceSession();
+        });
+        toggleMicBtn.addEventListener('click', startVoiceSession);
+        endCallBtn.addEventListener('click', stopVoiceSession);
+        sendTextBtn.addEventListener('click', sendTextMessageToNiko);
+        chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendTextMessageToNiko(); });
+        
+        loadVapiSDK();
+        window.addEventListener('beforeunload', () => { if(vapiInstance && isCallActive) vapiInstance.stop(); });
+        
+        console.log("%c🌀 Niko AI | Mor Daire | Diziden ilhamla hayata döndü", "color: #e040fb; font-size: 13px;");
+    })();
+</script>
 </body>
 </html>
