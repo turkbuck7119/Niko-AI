@@ -20,6 +20,10 @@
         .container {
             text-align: center;
             z-index: 2;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
         }
         h1 {
             color: #a020f0;
@@ -32,7 +36,7 @@
             color: #00ffff;
             font-size: 1rem;
             margin-top: 0;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             text-shadow: 0 0 8px #00ffff;
             letter-spacing: 1px;
         }
@@ -99,7 +103,7 @@
         }
 
         #status {
-            margin-top: 35px;
+            margin-top: 25px;
             font-size: 1.1rem;
             color: #fff;
             font-weight: bold;
@@ -110,11 +114,56 @@
         #user-text {
             color: #777;
             font-style: italic;
-            margin-top: 15px;
+            margin-top: 10px;
             font-size: 0.95rem;
+            min-height: 20px;
         }
-        .btn-group {
+
+        /* YENİ YAZI KUTUSU TASARIMI */
+        .input-group {
             margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .text-input {
+            flex: 1;
+            background: rgba(16, 16, 32, 0.8);
+            border: 1.5px solid #a020f0;
+            border-radius: 25px;
+            padding: 10px 20px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+            transition: 0.3s;
+            box-shadow: inset 0 0 5px rgba(160, 32, 240, 0.2);
+        }
+        .text-input:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        .send-btn {
+            background: #a020f0;
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.3s;
+            box-shadow: 0 0 10px rgba(160, 32, 240, 0.5);
+        }
+        .send-btn:hover {
+            background: #b026ff;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #b026ff;
+        }
+
+        .btn-group {
+            margin-top: 25px;
             display: flex;
             gap: 15px;
             justify-content: center;
@@ -150,12 +199,20 @@
             <div class="niko-orb" id="nikoBtn"></div>
         </div>
         
-        <div id="status">Uykudayım... Uyandırmak için mor küreye dokun!</div>
+        <div id="status">Uykudayım... Konuşmak için küreye dokun veya aşağıya yaz!</div>
         <div id="user-text"></div>
         
+        <!-- YENİ MESAJLAŞMA KUTUSU -->
+        <div class="input-group">
+            <input type="text" id="textInput" class="text-input" placeholder="Niko'ya mesaj yazın..." autocomplete="off">
+            <button id="sendBtn" class="send-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
+
         <div class="btn-group">
             <button id="reset-api-btn" class="action-btn">API Değiştir</button>
-            <a href="BURAYA_APK_LINKINI_YAZ" id="download-apk-btn" class="action-btn" target="_blank">Uygulamayı İndir (APK)</a>
+            <a href="BURAYA_MEDIAFIRE_LINKINI_YAZ" id="download-apk-btn" class="action-btn" target="_blank">Uygulamayı İndir (APK)</a>
         </div>
     </div>
 
@@ -170,7 +227,7 @@
                 if (userKey && userKey.trim() !== "") {
                     GROQ_API_KEY = userKey.trim();
                     localStorage.setItem("groq_api_key", GROQ_API_KEY);
-                    statusDiv.innerText = "Anahtar kaydedildi! Dokunarak Niko'yu uyandır.";
+                    statusDiv.innerText = "Anahtar kaydedildi! Niko'ya mesaj yazabilir veya küreye dokunabilirsin.";
                     statusDiv.style.color = "#00ffff";
                 } else {
                     statusDiv.innerText = "Hata: API anahtarı girilmedi!";
@@ -184,11 +241,14 @@
         const statusDiv = document.getElementById('status');
         const userTextDiv = document.getElementById('user-text');
         const resetApiBtn = document.getElementById('reset-api-btn');
+        const textInput = document.getElementById('textInput');
+        const sendBtn = document.getElementById('sendBtn');
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition;
         let isListening = false;
 
+        // Ses Tanıma Kurulumu
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'tr-TR';
@@ -214,13 +274,11 @@
             recognition.onerror = (event) => {
                 console.error("Ses tanıma hatası:", event.error);
                 resetButton();
-                statusDiv.innerText = "Seni duyamadım, tekrar dener misin?";
+                statusDiv.innerText = "Sesi alamadım, yazarak konuşmayı deneyebilirsin!";
                 statusDiv.style.color = "#ff007f";
             };
 
             recognition.onend = () => { resetButton(); };
-        } else {
-            statusDiv.innerText = "Tarayıcın ses tanımayı desteklemiyor! Lütfen Chrome kullan.";
         }
 
         function resetButton() {
@@ -228,19 +286,77 @@
             orbContainer.classList.remove('listening');
         }
 
-        nikoBtn.addEventListener('click', () => {
+        // Mikrofon izin isteme fonksiyonu
+        async function requestMicrophonePermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                return true;
+            } catch (err) {
+                console.error("Mikrofon izni alınamadı:", err);
+                return false;
+            }
+        }
+
+        // Mor Küreye Dokunma Olayı (Ses Tanıma)
+        nikoBtn.addEventListener('click', async () => {
             if (!GROQ_API_KEY) {
                 checkApiKey();
                 return;
             }
-            if (!SpeechRecognition) return;
+
+            if (!SpeechRecognition) {
+                statusDiv.innerText = "Cihazın ses tanımayı desteklemiyor. Lütfen aşağıdaki kutudan yaz!";
+                statusDiv.style.color = "#ff007f";
+                return;
+            }
 
             stopSpeaking();
 
+            const hasPermission = await requestMicrophonePermission();
+            if (!hasPermission) {
+                statusDiv.innerText = "Lütfen mikrofona izin ver veya yazarak devam et!";
+                statusDiv.style.color = "#ff007f";
+                return;
+            }
+
             if (!isListening) {
-                recognition.start();
+                try {
+                    recognition.start();
+                } catch(e) {
+                    console.log("Ses tanıma başlatılamadı:", e);
+                }
             } else {
                 recognition.stop();
+            }
+        });
+
+        // Yazılı Mesaj Gönderme Fonksiyonu
+        async function handleTextSend() {
+            const message = textInput.value.trim();
+            if (message === "") return;
+
+            if (!GROQ_API_KEY) {
+                checkApiKey();
+                return;
+            }
+
+            stopSpeaking();
+            userTextDiv.innerText = "Kullanıcı: " + message;
+            statusDiv.innerText = "Düşünüyorum...";
+            statusDiv.style.color = "#b026ff";
+            textInput.value = ""; // Kutuyu temizle
+
+            await askNiko(message);
+        }
+
+        // Gönder butonuna basınca
+        sendBtn.addEventListener('click', handleTextSend);
+
+        // Enter tuşuna basınca gönderme
+        textInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleTextSend();
             }
         });
 
@@ -356,7 +472,7 @@
                 activeAudioSource = source;
 
                 source.onended = () => {
-                    statusDiv.innerText = "Tekrar konuşmak için dokun!";
+                    statusDiv.innerText = "Tekrar konuşmak için dokun veya yaz!";
                     statusDiv.style.color = "#00ffff";
                     orbContainer.classList.remove('listening');
                     audioCtx.close();
@@ -389,7 +505,7 @@
             };
 
             utterance.onend = () => {
-                statusDiv.innerText = "Tekrar konuşmak için dokun!";
+                statusDiv.innerText = "Tekrar konuşmak için dokun veya yaz!";
                 statusDiv.style.color = "#00ffff";
                 orbContainer.classList.remove('listening');
             };
