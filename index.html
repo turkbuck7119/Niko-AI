@@ -116,8 +116,9 @@
         .btn-group {
             margin-top: 20px;
             display: flex;
-            gap: 10px;
+            gap: 15px;
             justify-content: center;
+            align-items: center;
         }
         .action-btn {
             background: transparent;
@@ -128,10 +129,13 @@
             border-radius: 5px;
             font-size: 0.8rem;
             transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
         }
         .action-btn:hover {
             background: #a020f0;
             color: #fff;
+            box-shadow: 0 0 10px #a020f0;
         }
     </style>
 </head>
@@ -150,7 +154,8 @@
         <div id="user-text"></div>
         
         <div class="btn-group">
-            <button id="reset-api-btn" class="action-btn">API Anahtarını Değiştir</button>
+            <button id="reset-api-btn" class="action-btn">API Değiştir</button>
+            <a href="BURAYA_APK_LINKINI_YAZ" id="download-apk-btn" class="action-btn" target="_blank">Uygulamayı İndir (APK)</a>
         </div>
     </div>
 
