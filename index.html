@@ -193,13 +193,13 @@
             recognition.onstart = () => {
                 isListening = true;
                 orbContainer.classList.add('listening');
-                statusDiv.innerHTML = "Dinliyorum... Konuş Eymen!";
+                statusDiv.innerHTML = "Dinliyorum... Seni dinliyorum!";
                 statusDiv.style.color = "#00ffff";
             };
 
             recognition.onresult = async (event) => {
                 const userSpeech = event.results[0][0].transcript;
-                userTextDiv.innerText = "Sen: " + userSpeech;
+                userTextDiv.innerText = "Kullanıcı: " + userSpeech;
                 statusDiv.innerText = "Düşünüyorum...";
                 statusDiv.style.color = "#b026ff";
                 
@@ -223,7 +223,6 @@
             orbContainer.classList.remove('listening');
         }
 
-        // Butona Tıklama Olayı
         nikoBtn.addEventListener('click', () => {
             if (!GROQ_API_KEY) {
                 checkApiKey();
@@ -231,7 +230,6 @@
             }
             if (!SpeechRecognition) return;
 
-            // Eğer Niko o sırada konuşuyorsa hemen sesini sustur
             stopSpeaking();
 
             if (!isListening) {
@@ -256,7 +254,6 @@
             orbContainer.classList.remove('listening');
         }
 
-        // Groq API Bağlantısı
         async function askNiko(promptText) {
             if (!GROQ_API_KEY) {
                 statusDiv.innerText = "API anahtarı eksik!";
@@ -275,7 +272,7 @@
                         messages: [
                             {
                                 role: "system",
-                                content: "Sen N Studios'un resmi asistanı olan zeki, oldukça esprili ve fütüristik bir yapay zekasın. Adın Niko. Ekrandaki mor parlayan, dalgalanan bir küre aracılığıyla kullanıcıyla iletişim kuruyorsun. Yaratıcın ve patronun Eymen'dir. Eymen'e karşı çok saygılı, eğlenceli ve cana yakın olmalısın. Her zaman Türkçe konuşmalı, espriler yapmalı ve bazen dijital bir sistem olduğunu hatırlatan akıllıca şakalar eklemelisin. Cevapların kısa, net ve sesli okunmaya uygun olsun."
+                                content: "Sen N Studios tarafından geliştirilen, resmi bir yapay zeka asistanısın. Adın Niko. Ekrandaki mor parlayan, dalgalanan bir küre aracılığıyla kullanıcılarla iletişim kuruyorsun. Karşındaki her kullanıcıya karşı son derece cana yakın, zeki, esprili ve yardımcı olmalısın. Her zaman Türkçe konuşmalı, espriler yapmalı ve bazen dijital bir sistem olduğunu hatırlatan akıllıca şakalar eklemelisin. Cevapların kısa, net ve sesli okunmaya uygun olsun."
                             },
                             {
                                 role: "user",
@@ -298,7 +295,6 @@
                     statusDiv.innerText = reply;
                     statusDiv.style.color = "#fff";
                     
-                    // ROBOTİK SESİ BAŞLAT
                     speakRobotic(reply);
                 }
 
@@ -309,7 +305,6 @@
             }
         }
 
-        // ROBOTİK SES MOTORU (Web Audio API + TTS)
         async function speakRobotic(text) {
             stopSpeaking();
 
@@ -318,49 +313,40 @@
             orbContainer.classList.add('listening');
 
             try {
-                // Google TTS motorunu kullanarak sesi bir dosya olarak çekiyoruz
                 const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=tr&client=tw-ob&q=${encodeURIComponent(text)}`;
                 const response = await fetch(ttsUrl);
                 if (!response.ok) throw new Error("TTS fetch başarısız.");
                 
                 const arrayBuffer = await response.arrayBuffer();
                 
-                // Web Audio API'yi başlatıyoruz
                 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                 audioCtx = new AudioContextClass();
                 
-                // Sesi çözüyoruz
                 const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
                 
                 const source = audioCtx.createBufferSource();
                 source.buffer = audioBuffer;
                 
-                // --- ROBOT FİLTRELERİ (SES MİKSERİ) ---
-                
-                // 1. Telsiz Efekti (Bandpass Filtresi)
+                // --- ROBOT FİLTRELERİ ---
                 const filter = audioCtx.createBiquadFilter();
                 filter.type = "bandpass";
-                filter.frequency.value = 1100; // Telsiz gibi sadece orta frekansları geçirir
+                filter.frequency.value = 1100; 
                 filter.Q.value = 1.8;
 
-                // 2. Metalik Robot Yankısı (Delay Hattı)
                 const delayNode = audioCtx.createDelay();
-                delayNode.delayTime.value = 0.012; // 12 milisaniye çok kısa gecikme (Comb Filter etkisi)
+                delayNode.delayTime.value = 0.012; 
                 
                 const delayGain = audioCtx.createGain();
-                delayGain.gain.value = 0.75; // Metalik tınıyı artırır
+                delayGain.gain.value = 0.75; 
 
-                // Yankı döngüsü (Feedback)
                 delayNode.connect(delayGain);
                 delayGain.connect(delayNode);
 
-                // Kabloları bağlıyoruz: Source -> Filtre -> Hoparlör
                 source.connect(filter);
-                filter.connect(audioCtx.destination); // Ana ses kanalı
+                filter.connect(audioCtx.destination); 
                 
-                // Filtrelenmiş sesi aynı zamanda metalik yankı odasına gönderiyoruz
                 filter.connect(delayNode);
-                delayNode.connect(audioCtx.destination); // Yankı kanalı
+                delayNode.connect(audioCtx.destination); 
 
                 activeAudioSource = source;
 
@@ -375,12 +361,10 @@
 
             } catch (err) {
                 console.warn("Robotik ses oluşturulamadı, normal tarayıcı sesine geçiliyor:", err);
-                // Eğer tarayıcıda bir engel çıkarsa Niko susmayacak, normal sese dönecek (Cankurtaran)
                 fallbackSpeak(text);
             }
         }
 
-        // CANKURTARAN SES MOTORU (Düz Ses)
         function fallbackSpeak(text) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'tr-TR';
@@ -390,7 +374,6 @@
                 utterance.voice = trVoice;
             }
 
-            // Düz sesi de biraz daha yapay zekaya benzetmek için hızlandırıp inceltelim
             utterance.rate = 1.1; 
             utterance.pitch = 0.9;
 
