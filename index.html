@@ -156,6 +156,8 @@
 
     <script>
         let GROQ_API_KEY = localStorage.getItem("groq_api_key");
+        let activeAudioSource = null;
+        let audioCtx = null;
 
         function checkApiKey() {
             if (!GROQ_API_KEY) {
@@ -221,13 +223,16 @@
             orbContainer.classList.remove('listening');
         }
 
+        // Butona Tıklama Olayı
         nikoBtn.addEventListener('click', () => {
             if (!GROQ_API_KEY) {
                 checkApiKey();
                 return;
             }
             if (!SpeechRecognition) return;
-            window.speechSynthesis.cancel();
+
+            // Eğer Niko o sırada konuşuyorsa hemen sesini sustur
+            stopSpeaking();
 
             if (!isListening) {
                 recognition.start();
@@ -242,6 +247,16 @@
             checkApiKey();
         });
 
+        function stopSpeaking() {
+            window.speechSynthesis.cancel();
+            if (activeAudioSource) {
+                try { activeAudioSource.stop(); } catch(e) {}
+                activeAudioSource = null;
+            }
+            orbContainer.classList.remove('listening');
+        }
+
+        // Groq API Bağlantısı
         async function askNiko(promptText) {
             if (!GROQ_API_KEY) {
                 statusDiv.innerText = "API anahtarı eksik!";
@@ -256,7 +271,7 @@
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "llama-3.1-8b-instant", // Güncel, aktif ve ultra hızlı model
+                        model: "llama-3.1-8b-instant", 
                         messages: [
                             {
                                 role: "system",
@@ -273,9 +288,8 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    statusDiv.innerText = "Hata: " + (data.error ? data.error.message : "API Hatası oluştu.");
+                    statusDiv.innerText = "Hata: " + (data.error ? data.error.message : "API Hatası.");
                     statusDiv.style.color = "#ff007f";
-                    console.error("Groq API Hatası:", data);
                     return;
                 }
 
@@ -283,10 +297,9 @@
                     const reply = data.choices[0].message.content;
                     statusDiv.innerText = reply;
                     statusDiv.style.color = "#fff";
-                    speak(reply);
-                } else {
-                    statusDiv.innerText = "Hata: Groq boş bir yanıt döndürdü.";
-                    statusDiv.style.color = "#ff007f";
+                    
+                    // ROBOTİK SESİ BAŞLAT
+                    speakRobotic(reply);
                 }
 
             } catch (error) {
@@ -296,7 +309,79 @@
             }
         }
 
-        function speak(text) {
+        // ROBOTİK SES MOTORU (Web Audio API + TTS)
+        async function speakRobotic(text) {
+            stopSpeaking();
+
+            statusDiv.innerText = "Niko konuşuyor...";
+            statusDiv.style.color = "#b026ff";
+            orbContainer.classList.add('listening');
+
+            try {
+                // Google TTS motorunu kullanarak sesi bir dosya olarak çekiyoruz
+                const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=tr&client=tw-ob&q=${encodeURIComponent(text)}`;
+                const response = await fetch(ttsUrl);
+                if (!response.ok) throw new Error("TTS fetch başarısız.");
+                
+                const arrayBuffer = await response.arrayBuffer();
+                
+                // Web Audio API'yi başlatıyoruz
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+                
+                // Sesi çözüyoruz
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                
+                const source = audioCtx.createBufferSource();
+                source.buffer = audioBuffer;
+                
+                // --- ROBOT FİLTRELERİ (SES MİKSERİ) ---
+                
+                // 1. Telsiz Efekti (Bandpass Filtresi)
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = "bandpass";
+                filter.frequency.value = 1100; // Telsiz gibi sadece orta frekansları geçirir
+                filter.Q.value = 1.8;
+
+                // 2. Metalik Robot Yankısı (Delay Hattı)
+                const delayNode = audioCtx.createDelay();
+                delayNode.delayTime.value = 0.012; // 12 milisaniye çok kısa gecikme (Comb Filter etkisi)
+                
+                const delayGain = audioCtx.createGain();
+                delayGain.gain.value = 0.75; // Metalik tınıyı artırır
+
+                // Yankı döngüsü (Feedback)
+                delayNode.connect(delayGain);
+                delayGain.connect(delayNode);
+
+                // Kabloları bağlıyoruz: Source -> Filtre -> Hoparlör
+                source.connect(filter);
+                filter.connect(audioCtx.destination); // Ana ses kanalı
+                
+                // Filtrelenmiş sesi aynı zamanda metalik yankı odasına gönderiyoruz
+                filter.connect(delayNode);
+                delayNode.connect(audioCtx.destination); // Yankı kanalı
+
+                activeAudioSource = source;
+
+                source.onended = () => {
+                    statusDiv.innerText = "Tekrar konuşmak için dokun!";
+                    statusDiv.style.color = "#00ffff";
+                    orbContainer.classList.remove('listening');
+                    audioCtx.close();
+                };
+
+                source.start(0);
+
+            } catch (err) {
+                console.warn("Robotik ses oluşturulamadı, normal tarayıcı sesine geçiliyor:", err);
+                // Eğer tarayıcıda bir engel çıkarsa Niko susmayacak, normal sese dönecek (Cankurtaran)
+                fallbackSpeak(text);
+            }
+        }
+
+        // CANKURTARAN SES MOTORU (Düz Ses)
+        function fallbackSpeak(text) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'tr-TR';
             const voices = window.speechSynthesis.getVoices();
@@ -304,6 +389,10 @@
             if (trVoice) {
                 utterance.voice = trVoice;
             }
+
+            // Düz sesi de biraz daha yapay zekaya benzetmek için hızlandırıp inceltelim
+            utterance.rate = 1.1; 
+            utterance.pitch = 0.9;
 
             utterance.onstart = () => {
                 statusDiv.innerText = "Niko konuşuyor...";
