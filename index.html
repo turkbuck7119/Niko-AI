@@ -37,7 +37,6 @@
             letter-spacing: 1px;
         }
         
-        /* Niko'nun Mor Yuvarlak Efekti */
         .niko-orb-wrapper {
             position: relative;
             width: 160px;
@@ -65,7 +64,6 @@
             box-shadow: 0 0 60px #e0b0ff;
         }
 
-        /* Arka plandaki mor dalgalanma efekti */
         .wave-ring {
             position: absolute;
             width: 120px;
@@ -78,7 +76,6 @@
             pointer-events: none;
         }
 
-        /* Aktif Dinleme Efekti */
         .listening .niko-orb {
             animation: orbPulse 1.2s infinite ease-in-out;
             background: radial-gradient(circle, #da70d6 0%, #7b1f8f 100%);
@@ -97,14 +94,8 @@
         }
 
         @keyframes ripple {
-            0% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
-            100% {
-                transform: scale(1.8);
-                opacity: 0;
-            }
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.8); opacity: 0; }
         }
 
         #status {
@@ -121,18 +112,22 @@
             margin-top: 15px;
             font-size: 0.95rem;
         }
-        #reset-api-btn {
+        .btn-group {
             margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .action-btn {
             background: transparent;
             border: 1px solid #a020f0;
             color: #a020f0;
-            padding: 5px 10px;
+            padding: 8px 15px;
             cursor: pointer;
             border-radius: 5px;
             font-size: 0.8rem;
             transition: 0.3s;
         }
-        #reset-api-btn:hover {
+        .action-btn:hover {
             background: #a020f0;
             color: #fff;
         }
@@ -151,17 +146,19 @@
         
         <div id="status">Uykudayım... Uyandırmak için mor küreye dokun!</div>
         <div id="user-text"></div>
-        <button id="reset-api-btn">API Anahtarını Değiştir</button>
+        
+        <div class="btn-group">
+            <button id="reset-api-btn" class="action-btn">API Anahtarını Değiştir</button>
+            <button id="check-console-btn" class="action-btn">Detaylı Hata Göster</button>
+        </div>
     </div>
 
     <script>
-        // --- API ANAHTARINI TARAYICI HAFIZASINDAN ÇEKİYORUZ ---
         let GROQ_API_KEY = localStorage.getItem("groq_api_key");
 
-        // Eğer hafızada anahtar yoksa kullanıcıya soralım
         function checkApiKey() {
             if (!GROQ_API_KEY) {
-                const userKey = prompt("Lütfen yeni Groq API anahtarınızı (gsk_...) girin:\n(Bu anahtar sadece sizin tarayıcınıza kaydedilir ve GitHub göremez!)");
+                const userKey = prompt("Lütfen yeni Groq API anahtarınızı (gsk_...) girin:\n(Bu anahtar sadece bilgisayarınızda saklanır!)");
                 if (userKey && userKey.trim() !== "") {
                     GROQ_API_KEY = userKey.trim();
                     localStorage.setItem("groq_api_key", GROQ_API_KEY);
@@ -179,32 +176,26 @@
         const statusDiv = document.getElementById('status');
         const userTextDiv = document.getElementById('user-text');
         const resetApiBtn = document.getElementById('reset-api-btn');
+        const checkConsoleBtn = document.getElementById('check-console-btn');
 
-        // Tarayıcı Ses Tanıma Ayarları (STT)
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition;
         let isListening = false;
 
         if (SpeechRecognition) {
-            recognition = new RecognitionSetup();
-        } else {
-            statusDiv.innerText = "Tarayıcın ses tanımayı desteklemiyor! Lütfen Chrome kullan.";
-        }
+            recognition = new SpeechRecognition();
+            recognition.lang = 'tr-TR';
+            recognition.continuous = false;
+            recognition.interimResults = false;
 
-        function RecognitionSetup() {
-            const rec = new SpeechRecognition();
-            rec.lang = 'tr-TR';
-            rec.continuous = false;
-            rec.interimResults = false;
-
-            rec.onstart = () => {
+            recognition.onstart = () => {
                 isListening = true;
                 orbContainer.classList.add('listening');
                 statusDiv.innerHTML = "Dinliyorum... Konuş Eymen!";
                 statusDiv.style.color = "#00ffff";
             };
 
-            rec.onresult = async (event) => {
+            recognition.onresult = async (event) => {
                 const userSpeech = event.results[0][0].transcript;
                 userTextDiv.innerText = "Sen: " + userSpeech;
                 statusDiv.innerText = "Düşünüyorum...";
@@ -213,18 +204,16 @@
                 await askNiko(userSpeech);
             };
 
-            rec.onerror = (event) => {
+            recognition.onerror = (event) => {
                 console.error("Ses tanıma hatası:", event.error);
                 resetButton();
                 statusDiv.innerText = "Seni duyamadım, tekrar dener misin?";
                 statusDiv.style.color = "#ff007f";
             };
 
-            rec.onend = () => {
-                resetButton();
-            };
-
-            return rec;
+            recognition.onend = () => { resetButton(); };
+        } else {
+            statusDiv.innerText = "Tarayıcın ses tanımayı desteklemiyor! Lütfen Chrome kullan.";
         }
 
         function resetButton() {
@@ -232,17 +221,12 @@
             orbContainer.classList.remove('listening');
         }
 
-        // Butona Tıklama Olayı
         nikoBtn.addEventListener('click', () => {
-            // Önce anahtarın var olduğundan emin olalım
             if (!GROQ_API_KEY) {
                 checkApiKey();
                 return;
             }
-
             if (!SpeechRecognition) return;
-            
-            // Eğer Niko konuşuyorsa sesini kes
             window.speechSynthesis.cancel();
 
             if (!isListening) {
@@ -252,14 +236,16 @@
             }
         });
 
-        // API Anahtarını Sıfırlama Butonu (Yanlış girilirse diye)
         resetApiBtn.addEventListener('click', () => {
             localStorage.removeItem("groq_api_key");
             GROQ_API_KEY = null;
             checkApiKey();
         });
 
-        // Groq API Bağlantısı
+        checkConsoleBtn.addEventListener('click', () => {
+            alert("Eğer hata alıyorsan, klavyeden F12 tuşuna basıp üstteki 'Console' (Konsol) sekmesinde yazan kırmızı hatalara bakabilirsin.");
+        });
+
         async function askNiko(promptText) {
             if (!GROQ_API_KEY) {
                 statusDiv.innerText = "API anahtarı eksik!";
@@ -288,32 +274,30 @@
                     })
                 });
 
+                const data = await response.json();
+
                 if (response.status === 401) {
-                    statusDiv.innerText = "Hata: API anahtarı geçersiz! Lütfen alttaki butondan sıfırlayıp yenisini girin.";
+                    statusDiv.innerText = "Hata: API anahtarı geçersiz! (Muhtemelen GitHub tarafından iptal edildi).";
                     statusDiv.style.color = "#ff007f";
+                    console.log("Hata Detayı:", data);
                     return;
                 }
 
-                const data = await response.json();
                 const reply = data.choices[0].message.content;
-                
                 statusDiv.innerText = reply;
                 statusDiv.style.color = "#fff";
-                
                 speak(reply);
 
             } catch (error) {
                 console.error("Groq Hatası:", error);
-                statusDiv.innerText = "Bağlantı hatası! Lütfen internetini veya API anahtarını kontrol et.";
+                statusDiv.innerText = "Bağlantı hatası! F12 Console sekmesine bakmayı dene.";
                 statusDiv.style.color = "#ff007f";
             }
         }
 
-        // Tarayıcı Seslendirme Sistemi (TTS)
         function speak(text) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'tr-TR';
-            
             const voices = window.speechSynthesis.getVoices();
             const trVoice = voices.find(voice => voice.lang.includes('tr'));
             if (trVoice) {
@@ -335,7 +319,6 @@
             window.speechSynthesis.speak(utterance);
         }
 
-        // Sayfa açıldığında anahtar yoksa otomatik soralım
         window.onload = () => {
             if (!GROQ_API_KEY) {
                 checkApiKey();
