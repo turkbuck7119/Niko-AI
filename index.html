@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Niko AI - N Studios</title>
     <style>
         body {
@@ -10,68 +10,68 @@
             color: #fff;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            height: 100vh;
+            justify-content: flex-start;
+            min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            overflow: hidden;
+            padding: 20px 0;
+            box-sizing: border-box;
+            overflow-y: auto; /* Klavyede ekranın kayabilmesi için esnek yaptık */
+            -webkit-tap-highlight-color: transparent; /* Mobil dokunma rengini sıfırladık */
         }
         .container {
             text-align: center;
-            z-index: 2;
             width: 100%;
             max-width: 400px;
-            padding: 20px;
+            padding: 10px 20px;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         h1 {
             color: #a020f0;
             text-shadow: 0 0 20px #a020f0;
-            font-size: 2.5rem;
-            margin-bottom: 5px;
+            font-size: 2.2rem;
+            margin: 10px 0 5px 0;
             letter-spacing: 2px;
         }
         p {
             color: #00ffff;
-            font-size: 1rem;
+            font-size: 0.95rem;
             margin-top: 0;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-shadow: 0 0 8px #00ffff;
             letter-spacing: 1px;
         }
         
         .niko-orb-wrapper {
             position: relative;
-            width: 160px;
-            height: 160px;
-            margin: 0 auto;
+            width: 150px;
+            height: 150px;
+            margin: 10px auto;
             display: flex;
             justify-content: center;
             align-items: center;
         }
         
         .niko-orb {
-            width: 120px;
-            height: 120px;
+            width: 110px;
+            height: 110px;
             background: radial-gradient(circle, #b026ff 0%, #4a0082 100%);
             border-radius: 50%;
             border: 3px solid #e0b0ff;
             box-shadow: 0 0 40px #b026ff, inset 0 0 20px rgba(255, 255, 255, 0.4);
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 3;
-        }
-
-        .niko-orb:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 60px #e0b0ff;
+            transition: all 0.3s ease;
+            z-index: 10; /* Dokunmayı garantilemek için en üste aldık */
         }
 
         .wave-ring {
             position: absolute;
-            width: 120px;
-            height: 120px;
+            width: 110px;
+            height: 110px;
             border-radius: 50%;
             background: transparent;
             border: 2px solid #b026ff;
@@ -93,50 +93,52 @@
 
         @keyframes orbPulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.08); }
             100% { transform: scale(1); }
         }
 
         @keyframes ripple {
             0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.8); opacity: 0; }
+            100% { transform: scale(1.7); opacity: 0; }
         }
 
         #status {
-            margin-top: 25px;
-            font-size: 1.1rem;
+            margin-top: 20px;
+            font-size: 1rem;
             color: #fff;
             font-weight: bold;
-            min-height: 50px;
+            min-height: 45px;
             text-shadow: 0 0 10px rgba(255,255,255,0.3);
-            padding: 0 20px;
+            padding: 0 10px;
         }
         #user-text {
-            color: #777;
+            color: #888;
             font-style: italic;
-            margin-top: 10px;
-            font-size: 0.95rem;
+            margin-top: 5px;
+            font-size: 0.9rem;
             min-height: 20px;
         }
 
-        /* GÜNCELLENMİŞ YAZI KUTUSU VE GÖNDER BUTONU */
+        /* MOBİL DOKUNMATİK UYUMLU GİRİŞ ALANI */
         .input-group {
-            margin-top: 20px;
+            margin-top: 15px;
             display: flex;
             gap: 10px;
             width: 100%;
+            z-index: 15; /* Giriş alanını ve butonu kesin tıklanabilir yapmak için üste aldık */
         }
         .text-input {
             flex: 1;
-            background: rgba(16, 16, 32, 0.8);
+            background: rgba(16, 16, 32, 0.9);
             border: 1.5px solid #a020f0;
             border-radius: 25px;
-            padding: 10px 20px;
+            padding: 12px 20px;
             color: #fff;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             outline: none;
             transition: 0.3s;
             box-shadow: inset 0 0 5px rgba(160, 32, 240, 0.2);
+            -webkit-appearance: none;
         }
         .text-input:focus {
             border-color: #00ffff;
@@ -147,45 +149,50 @@
             border: none;
             color: white;
             border-radius: 50%;
-            width: 42px;
-            height: 42px;
+            width: 45px;
+            height: 45px;
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
             transition: 0.3s;
             box-shadow: 0 0 10px rgba(160, 32, 240, 0.5);
+            padding: 0;
+            z-index: 20;
         }
-        .send-btn:hover {
+        .send-btn:active {
+            transform: scale(0.9);
             background: #b026ff;
-            transform: scale(1.05);
-            box-shadow: 0 0 15px #b026ff;
         }
-        /* SVG'nin tıklamayı engellemesini önleyen kritik stil */
         .send-btn svg {
-            pointer-events: none; 
+            pointer-events: none; /* SVG'nin tıklamayı engellemesini önler */
         }
 
         .btn-group {
             margin-top: 25px;
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
             align-items: center;
+            width: 100%;
+            z-index: 15;
         }
         .action-btn {
-            background: transparent;
+            background: rgba(16, 16, 32, 0.6);
             border: 1px solid #a020f0;
             color: #a020f0;
-            padding: 8px 15px;
+            padding: 10px 18px;
             cursor: pointer;
-            border-radius: 5px;
-            font-size: 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
             transition: 0.3s;
             text-decoration: none;
             display: inline-block;
+            text-align: center;
+            flex: 1;
+            max-width: 150px;
         }
-        .action-btn:hover {
+        .action-btn:active {
             background: #a020f0;
             color: #fff;
             box-shadow: 0 0 10px #a020f0;
@@ -206,7 +213,6 @@
         <div id="status">Uykudayım... Konuşmak için küreye dokun veya aşağıya yaz!</div>
         <div id="user-text"></div>
         
-        <!-- MESAJLAŞMA KUTUSU -->
         <div class="input-group">
             <input type="text" id="textInput" class="text-input" placeholder="Niko'ya mesaj yazın..." autocomplete="off">
             <button id="sendBtn" class="send-btn" type="button">
@@ -215,8 +221,8 @@
         </div>
 
         <div class="btn-group">
-            <button id="reset-api-btn" class="action-btn">API Değiştir</button>
-            <a href="BURAYA_MEDIAFIRE_LINKINI_YAZ" id="download-apk-btn" class="action-btn" target="_blank">Uygulamayı İndir (APK)</a>
+            <button id="reset-api-btn" class="action-btn" type="button">API Değiştir</button>
+            <a href="BURAYA_MEDIAFIRE_LINKINI_YAZ" id="download-apk-btn" class="action-btn" target="_blank">APK İndir</a>
         </div>
     </div>
 
@@ -227,7 +233,7 @@
 
         function checkApiKey() {
             if (!GROQ_API_KEY) {
-                const userKey = prompt("Lütfen yeni Groq API anahtarınızı (gsk_...) girin:\n(Bu anahtar sadece tarayıcınızda saklanır!)");
+                const userKey = prompt("Lütfen yeni Groq API anahtarınızı (gsk_...) girin:\n(Bu anahtar sadece cihazınızda saklanır!)");
                 if (userKey && userKey.trim() !== "") {
                     GROQ_API_KEY = userKey.trim();
                     localStorage.setItem("groq_api_key", GROQ_API_KEY);
@@ -252,7 +258,6 @@
         let recognition;
         let isListening = false;
 
-        // Ses Tanıma Kurulumu
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'tr-TR';
@@ -290,7 +295,6 @@
             orbContainer.classList.remove('listening');
         }
 
-        // Mikrofon izin isteme fonksiyonu
         async function requestMicrophonePermission() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -302,8 +306,9 @@
             }
         }
 
-        // Mor Küreye Dokunma Olayı (Ses Tanıma)
-        nikoBtn.addEventListener('click', async () => {
+        // TIKLAMA SORUNUNU ÇÖZEN "CLICK" VE "TOUCH" GÜNCELLEMELERİ
+        function handleOrbClick(e) {
+            e.preventDefault();
             if (!GROQ_API_KEY) {
                 checkApiKey();
                 return;
@@ -317,13 +322,6 @@
 
             stopSpeaking();
 
-            const hasPermission = await requestMicrophonePermission();
-            if (!hasPermission) {
-                statusDiv.innerText = "Lütfen mikrofona izin ver veya yazarak devam et!";
-                statusDiv.style.color = "#ff007f";
-                return;
-            }
-
             if (!isListening) {
                 try {
                     recognition.start();
@@ -333,9 +331,12 @@
             } else {
                 recognition.stop();
             }
-        });
+        }
 
-        // GÜNCELLENMİŞ Yazılı Mesaj Gönderme Fonksiyonu
+        // Hem dokunma hem tıklama için tetikleyiciler (Çift tıklamayı önlemek içinpreventDefault kullandık)
+        nikoBtn.addEventListener('click', handleOrbClick);
+        nikoBtn.addEventListener('touchstart', handleOrbClick, { passive: false });
+
         async function handleTextSend() {
             const message = textInput.value.trim();
             if (message === "") return;
@@ -350,20 +351,22 @@
             statusDiv.innerText = "Düşünüyorum...";
             statusDiv.style.color = "#b026ff";
             
-            // Telefonda klavyeyi otomatik gizlemek için odağı kaybet
             textInput.blur();
             textInput.value = ""; 
 
             await askNiko(message);
         }
 
-        // Gönder butonuna basınca (Dokunma kısıtlamaları kaldırıldı)
+        // Gönder butonuna tıklama olayları
         sendBtn.addEventListener('click', (e) => {
             e.preventDefault();
             handleTextSend();
         });
+        sendBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleTextSend();
+        }, { passive: false });
 
-        // Enter tuşuna basınca gönderme
         textInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -371,11 +374,15 @@
             }
         });
 
-        resetApiBtn.addEventListener('click', () => {
+        // API Değiştirme Butonu Olayları
+        function handleResetApi(e) {
+            e.preventDefault();
             localStorage.removeItem("groq_api_key");
             GROQ_API_KEY = null;
             checkApiKey();
-        });
+        }
+        resetApiBtn.addEventListener('click', handleResetApi);
+        resetApiBtn.addEventListener('touchstart', handleResetApi, { passive: false });
 
         function stopSpeaking() {
             window.speechSynthesis.cancel();
@@ -459,7 +466,6 @@
                 const source = audioCtx.createBufferSource();
                 source.buffer = audioBuffer;
                 
-                // --- ROBOT FİLTRELERİ ---
                 const filter = audioCtx.createBiquadFilter();
                 filter.type = "bandpass";
                 filter.frequency.value = 1100; 
